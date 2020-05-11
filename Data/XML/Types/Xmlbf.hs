@@ -5,16 +5,21 @@
 
 module Data.XML.Types.Xmlbf where
 
-import Data.Foldable (foldMap)
+import Control.Applicative ((<|>))
+import Data.Foldable (fold, foldMap)
 import qualified Data.HashMap.Strict as HashMap
 import Data.Maybe (fromMaybe, maybeToList)
 import Data.Text (Text)
+import qualified Data.Text as Text
 import qualified Data.Text.Lazy as Text.Lazy
 import qualified Data.XML.Types as XML
 import qualified HTMLEntities.Text as HTMLEntities
 import qualified Xmlbf
 import Xmlbf (FromXml (..), ToXml (..))
 
+-------------
+-- ToXml
+-------------
 instance ToXml XML.Document where
   toXml XML.Document {..} =
     toXml documentPrologue
@@ -62,3 +67,44 @@ instance ToXml XML.Node where
     XML.NodeInstruction i -> mempty
     XML.NodeContent c -> Xmlbf.text $ Text.Lazy.fromStrict $ escapeContent c
     XML.NodeComment t -> mempty
+
+-------------
+-- FromXml
+-------------
+
+-- | FromXml is not provided for @Document@ because Xmlbf does not net
+--   support Processing Instructions or Doctypes.
+instance FromXml XML.Element where
+  fromXml =
+    Xmlbf.pAnyElement $
+      XML.Element <$> (name <$> Xmlbf.pName)
+        <*> (fmap attr . HashMap.toList <$> Xmlbf.pAttrs)
+        <*> (fmap node <$> Xmlbf.pChildren)
+
+attr :: (Text, Text) -> (XML.Name, [XML.Content])
+attr (k, v) = (name k, [XML.ContentText v])
+
+name :: Text -> XML.Name
+name t = case Text.splitOn ":" t of
+  [noPrefix] -> XML.Name
+    { XML.nameLocalName = noPrefix,
+      XML.nameNamespace = Nothing,
+      XML.namePrefix = Nothing
+    }
+  prefix : rest -> XML.Name
+    { XML.nameLocalName = fold rest,
+      XML.nameNamespace = Nothing,
+      XML.namePrefix = Just prefix
+    }
+  _ -> XML.Name t Nothing Nothing
+
+node :: Xmlbf.Node -> XML.Node
+node = \case
+  Xmlbf.Element name' attrs' children' ->
+    XML.NodeElement $ XML.Element
+      { XML.elementName = name name',
+        XML.elementAttributes = attr <$> HashMap.toList attrs',
+        XML.elementNodes = node <$> children'
+      }
+  Xmlbf.Text content ->
+    XML.NodeContent $ XML.ContentText $ Text.Lazy.toStrict content
