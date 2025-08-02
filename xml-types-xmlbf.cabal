@@ -15,11 +15,11 @@ tested-with:         ghc == 8.6.5
 
 library
   exposed-modules: Data.XML.Types.Xmlbf
-  build-depends: base >=4.12 && <4.13
-               , html-entities ==1.1.*
-               , text ==1.2.*
-               , unordered-containers >=0.2 && <0.3
-               , xmlbf ==0.6.*
-               , xml-types ==0.3.*
+  build-depends: base
+               , html-entities
+               , text
+               , unordered-containers
+               , xmlbf
+               , xml-types
   hs-source-dirs: .
   default-language:    Haskell2010
