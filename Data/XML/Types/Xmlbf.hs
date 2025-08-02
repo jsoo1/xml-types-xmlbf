@@ -65,7 +65,7 @@ instance ToXml XML.Node where
   toXml = \case
     XML.NodeElement e -> toXml e
     XML.NodeInstruction i -> mempty
-    XML.NodeContent c -> Xmlbf.text $ Text.Lazy.fromStrict $ escapeContent c
+    XML.NodeContent c -> Xmlbf.text $ escapeContent c
     XML.NodeComment t -> mempty
 
 -------------
@@ -107,4 +107,4 @@ node = \case
         XML.elementNodes = node <$> children'
       }
   Xmlbf.Text content ->
-    XML.NodeContent $ XML.ContentText $ Text.Lazy.toStrict content
+    XML.NodeContent $ XML.ContentText content

@@ -11,7 +11,7 @@ category:            Text
 build-type:          Simple
 extra-source-files:  README.md
 cabal-version:       >=1.10
-tested-with:         ghc == 8.6.5
+tested-with:         ghc == 9.2.8
 
 library
   exposed-modules: Data.XML.Types.Xmlbf
